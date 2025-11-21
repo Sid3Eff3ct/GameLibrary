@@ -1,261 +1,197 @@
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const highScoreElement = document.getElementById('highScore');
-        const gameOverElement = document.getElementById('gameOver');
-        const finalScoreElement = document.getElementById('finalScore');
-        const startBtn = document.getElementById('startBtn');
+        // Game state
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = false;
+        let gameMode = ''; // 'hvh' or 'hvb'
+        let scores = { X: 0, O: 0, draw: 0 };
 
-        // Mobile controls
-        const upBtn = document.getElementById('upBtn');
-        const downBtn = document.getElementById('downBtn');
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
+        // Winning combinations
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]              // Diagonals
+        ];
 
-        // Game variables
-        const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
-        let player = { x: 10, y: 10 };
-        let projectiles = [];
-        let score = 0;
-        let highScore = localStorage.getItem('dodgeHighScore') || 0;
-        let gameRunning = false;
-        let gameLoop;
-        let startTime;
-        let spawnInterval;
-        let difficultyInterval;
-        let spawnRate = 1500; // milliseconds between spawns
-        let keysPressed = {};
+        // DOM elements
+        const modeSelection = document.getElementById('modeSelection');
+        const humanVsHumanBtn = document.getElementById('humanVsHuman');
+        const humanVsBotBtn = document.getElementById('humanVsBot');
+        const boardElement = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const gameInfo = document.getElementById('gameInfo');
+        const controls = document.getElementById('controls');
+        const restartBtn = document.getElementById('restartBtn');
+        const changeModeBtn = document.getElementById('changeModeBtn');
+        const scoreBoard = document.getElementById('scoreBoard');
+        const scoreXElement = document.getElementById('scoreX');
+        const scoreOElement = document.getElementById('scoreO');
+        const scoreDrawElement = document.getElementById('scoreDraw');
 
-        highScoreElement.textContent = highScore;
+        // Event listeners
+        humanVsHumanBtn.addEventListener('click', () => startGame('hvh'));
+        humanVsBotBtn.addEventListener('click', () => startGame('hvb'));
+        restartBtn.addEventListener('click', restartGame);
+        changeModeBtn.addEventListener('click', changeMode);
 
-        // Keyboard controls
-        document.addEventListener('keydown', (event) => {
-            const key = event.keyCode;
-            keysPressed[key] = true;
-            if (!gameRunning && (key === 37 || key === 38 || key === 39 || key === 40 || 
-                                  key === 65 || key === 87 || key === 68 || key === 83)) {
-                startGame();
-            }
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
         });
 
-        document.addEventListener('keyup', (event) => {
-            keysPressed[event.keyCode] = false;
-        });
+        function startGame(mode) {
+            gameMode = mode;
+            gameActive = true;
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
 
-        function handleKeyboardMovement() {
-            const LEFT_KEY = 37, RIGHT_KEY = 39, UP_KEY = 38, DOWN_KEY = 40;
-            const A_KEY = 65, D_KEY = 68, W_KEY = 87, S_KEY = 83;
+            modeSelection.classList.add('hidden');
+            boardElement.classList.remove('hidden');
+            controls.classList.remove('hidden');
+            scoreBoard.classList.remove('hidden');
 
-            if ((keysPressed[LEFT_KEY] || keysPressed[A_KEY]) && player.x > 0) {
-                player.x--;
-            }
-            if ((keysPressed[RIGHT_KEY] || keysPressed[D_KEY]) && player.x < tileCount - 1) {
-                player.x++;
-            }
-            if ((keysPressed[UP_KEY] || keysPressed[W_KEY]) && player.y > 0) {
-                player.y--;
-            }
-            if ((keysPressed[DOWN_KEY] || keysPressed[S_KEY]) && player.y < tileCount - 1) {
-                player.y++;
-            }
+            updateGameInfo();
+            resetBoard();
         }
 
-        // Mobile touch controls
-        upBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.y > 0) player.y--;
-        });
+        function handleCellClick(event) {
+            const cell = event.target;
+            const index = parseInt(cell.getAttribute('data-index'));
 
-        upBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.y > 0) player.y--;
-        });
-
-        downBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.y < tileCount - 1) player.y++;
-        });
-
-        downBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.y < tileCount - 1) player.y++;
-        });
-
-        leftBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.x > 0) player.x--;
-        });
-
-        leftBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.x > 0) player.x--;
-        });
-
-        rightBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.x < tileCount - 1) player.x++;
-        });
-
-        rightBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!gameRunning) startGame();
-            if (player.x < tileCount - 1) player.x++;
-        });
-
-        startBtn.addEventListener('click', startGame);
-
-        function startGame() {
-            if (gameRunning) return;
-            
-            gameRunning = true;
-            player = { x: 10, y: 10 };
-            projectiles = [];
-            score = 0;
-            spawnRate = 800;
-            startTime = Date.now();
-            gameOverElement.classList.remove('show');
-            startBtn.textContent = 'Restart';
-
-            // Start spawning projectiles
-            spawnProjectile();
-            spawnInterval = setInterval(spawnProjectile, spawnRate);
-
-            // Increase difficulty over time
-            difficultyInterval = setInterval(() => {
-                if (spawnRate > 400) {
-                    spawnRate -= 100;
-                    clearInterval(spawnInterval);
-                    spawnInterval = setInterval(spawnProjectile, spawnRate);
-                }
-            }, 2000); // Increase difficulty every 2 seconds
-
-            gameLoop = setInterval(updateGame, 50);
-        }
-
-        function spawnProjectile() {
-            const side = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
-            let projectile = { speed: 0.4 };
-
-            switch(side) {
-                case 0: // Top
-                    projectile.x = Math.random() * tileCount;
-                    projectile.y = 0;
-                    projectile.dx = 0;
-                    projectile.dy = 1;
-                    break;
-                case 1: // Right
-                    projectile.x = tileCount;
-                    projectile.y = Math.random() * tileCount;
-                    projectile.dx = -1;
-                    projectile.dy = 0;
-                    break;
-                case 2: // Bottom
-                    projectile.x = Math.random() * tileCount;
-                    projectile.y = tileCount;
-                    projectile.dx = 0;
-                    projectile.dy = -1;
-                    break;
-                case 3: // Left
-                    projectile.x = 0;
-                    projectile.y = Math.random() * tileCount;
-                    projectile.dx = 1;
-                    projectile.dy = 0;
-                    break;
-            }
-
-            projectiles.push(projectile);
-        }
-
-        function updateGame() {
-            handleKeyboardMovement();
-
-            // Update score (time survived)
-            score = Math.floor((Date.now() - startTime) / 1000);
-            scoreElement.textContent = score;
-
-            // Move projectiles
-            projectiles.forEach(proj => {
-                proj.x += proj.dx * proj.speed;
-                proj.y += proj.dy * proj.speed;
-            });
-
-            // Remove projectiles that are off screen
-            projectiles = projectiles.filter(proj => {
-                return proj.x >= -1 && proj.x <= tileCount + 1 && 
-                       proj.y >= -1 && proj.y <= tileCount + 1;
-            });
-
-            // Check collision
-            if (checkCollision()) {
-                endGame();
+            if (board[index] !== '' || !gameActive) {
                 return;
             }
 
-            drawGame();
-        }
+            makeMove(index, currentPlayer);
 
-        function checkCollision() {
-            for (let proj of projectiles) {
-                const projTileX = Math.floor(proj.x);
-                const projTileY = Math.floor(proj.y);
-                
-                // Check if projectile overlaps with player tile
-                if (Math.abs(proj.x - player.x) < 0.6 && Math.abs(proj.y - player.y) < 0.6) {
-                    return true;
-                }
+            if (gameActive && gameMode === 'hvb' && currentPlayer === 'O') {
+                // Bot's turn
+                setTimeout(botMove, 500);
             }
-            return false;
         }
 
-        function drawGame() {
-            // Clear canvas
-            ctx.fillStyle = '#f5f5f5';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function makeMove(index, player) {
+            board[index] = player;
+            cells[index].textContent = player;
+            cells[index].classList.add('taken', player.toLowerCase());
 
-            // Draw player
-            ctx.fillStyle = '#667eea';
-            ctx.fillRect(player.x * gridSize, player.y * gridSize, gridSize - 2, gridSize - 2);
+            if (checkWin(player)) {
+                endGame(`Player ${player} wins! 🎉`);
+                highlightWinningCells(player);
+                scores[player]++;
+                updateScores();
+            } else if (checkDraw()) {
+                endGame("It's a draw! 🤝");
+                scores.draw++;
+                updateScores();
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateGameInfo();
+            }
+        }
 
-            // Draw projectiles
-            projectiles.forEach(proj => {
-                ctx.fillStyle = '#ff6b6b';
-                ctx.beginPath();
-                ctx.arc(
-                    proj.x * gridSize + gridSize / 2,
-                    proj.y * gridSize + gridSize / 2,
-                    gridSize / 2 - 2,
-                    0,
-                    2 * Math.PI
-                );
-                ctx.fill();
+        function botMove() {
+            if (!gameActive) return;
+
+            // Simple AI: Try to win, block player, or random move
+            let move = findBestMove();
+            makeMove(move, 'O');
+        }
+
+        function findBestMove() {
+            // Try to win
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (board[a] === 'O' && board[b] === 'O' && board[c] === '') return c;
+                if (board[a] === 'O' && board[c] === 'O' && board[b] === '') return b;
+                if (board[b] === 'O' && board[c] === 'O' && board[a] === '') return a;
+            }
+
+            // Try to block
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (board[a] === 'X' && board[b] === 'X' && board[c] === '') return c;
+                if (board[a] === 'X' && board[c] === 'X' && board[b] === '') return b;
+                if (board[b] === 'X' && board[c] === 'X' && board[a] === '') return a;
+            }
+
+            // Take center if available
+            if (board[4] === '') return 4;
+
+            // Take a corner
+            const corners = [0, 2, 6, 8];
+            const availableCorners = corners.filter(i => board[i] === '');
+            if (availableCorners.length > 0) {
+                return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+            }
+
+            // Take any available space
+            const availableMoves = board.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+            return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+        }
+
+        function checkWin(player) {
+            return winningConditions.some(condition => {
+                return condition.every(index => board[index] === player);
             });
         }
 
-        function endGame() {
-            clearInterval(gameLoop);
-            clearInterval(spawnInterval);
-            clearInterval(difficultyInterval);
-            gameRunning = false;
-            gameOverElement.classList.add('show');
-            finalScoreElement.textContent = score;
+        function checkDraw() {
+            return board.every(cell => cell !== '');
+        }
 
-            if (score > highScore) {
-                highScore = score;
-                highScoreElement.textContent = highScore;
-                localStorage.setItem('dodgeHighScore', highScore);
+        function highlightWinningCells(player) {
+            for (let condition of winningConditions) {
+                if (condition.every(index => board[index] === player)) {
+                    condition.forEach(index => {
+                        cells[index].classList.add('winner');
+                    });
+                    break;
+                }
             }
         }
 
-        // Initial draw
-        ctx.fillStyle = '#f5f5f5';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#667eea';
-        ctx.fillRect(player.x * gridSize, player.y * gridSize, gridSize - 2, gridSize - 2);
+        function endGame(message) {
+            gameActive = false;
+            gameInfo.textContent = message;
+            gameInfo.classList.add('highlight');
+            setTimeout(() => gameInfo.classList.remove('highlight'), 500);
+        }
+
+        function updateGameInfo() {
+            if (gameMode === 'hvh') {
+                gameInfo.textContent = `Player ${currentPlayer}'s turn`;
+            } else {
+                gameInfo.textContent = currentPlayer === 'X' ? "Your turn (X)" : "Bot's turn (O)";
+            }
+        }
+
+        function updateScores() {
+            scoreXElement.textContent = scores.X;
+            scoreOElement.textContent = scores.O;
+            scoreDrawElement.textContent = scores.draw;
+        }
+
+        function restartGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            resetBoard();
+            updateGameInfo();
+        }
+
+        function resetBoard() {
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('taken', 'x', 'o', 'winner');
+            });
+        }
+
+        function changeMode() {
+            modeSelection.classList.remove('hidden');
+            boardElement.classList.add('hidden');
+            controls.classList.add('hidden');
+            scoreBoard.classList.add('hidden');
+            gameActive = false;
+            gameInfo.textContent = 'Choose a game mode to start';
+            scores = { X: 0, O: 0, draw: 0 };
+            updateScores();
+        }

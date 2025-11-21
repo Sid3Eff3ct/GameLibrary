@@ -3,44 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dodge Game</title>
-    <link rel="stylesheet" href="css/style_dodgeIt.css">
+    <title>Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="css/style_ticTacToe.css">
 </head>
 <body>
     <div class="game-container">
-        <h1>🎯 Dodge Game</h1>
-        <div class="score-board">
-            <div>Time: <span id="score">0</span>s</div>
-            <div>Best: <span id="highScore">0</span>s</div>
-        </div>
-        
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
-        </div>
-        
-        <div class="game-over" id="gameOver">
-            Game Over! You survived <span id="finalScore">0</span> seconds!
+        <h1>🎮 Tic-Tac-Toe</h1>
+
+        <div class="mode-selection" id="modeSelection">
+            <h2>Choose Game Mode</h2>
+            <div class="mode-buttons">
+                <button class="mode-btn" id="humanVsHuman">👤 vs 👤<br>Human vs Human</button>
+                <button class="mode-btn" id="humanVsBot">👤 vs 🤖<br>Human vs Bot</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <a href="index.html" class="btn secondary">Back to Menu</a>
+            </div>
         </div>
 
-        <div class="controls" id="controls">
-            <button class="control-btn" id="upBtn">▲</button>
-            <button class="control-btn" id="leftBtn">◄</button>
-            <button class="control-btn" id="downBtn">▼</button>
-            <button class="control-btn" id="rightBtn">►</button>
+        <div class="score-board hidden" id="scoreBoard">
+            <div class="score-item">
+                <div class="score-label">Player X</div>
+                <div class="score-value" id="scoreX">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Draws</div>
+                <div class="score-value" id="scoreDraw">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Player O</div>
+                <div class="score-value" id="scoreO">0</div>
+            </div>
         </div>
 
-        <div class="buttons">
-            <button class="btn" id="startBtn">Start Game</button>
+        <div class="game-info" id="gameInfo">Choose a game mode to start</div>
+
+        <div class="board hidden" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="controls hidden" id="controls">
+            <button class="btn" id="restartBtn">Restart Game</button>
+            <button class="btn secondary" id="changeModeBtn">Change Mode</button>
             <a href="index.html" class="btn secondary">Back to Menu</a>
-        </div>
-
-        <div class="instructions">
-            <strong>Desktop:</strong> Arrow Keys or WASD<br>
-            <strong>Mobile:</strong> Touch Controls<br>
-            Dodge the projectiles for as long as you can!
         </div>
     </div>
 
-    <script src="js/script_dodgeIt.js"></script>
+    <script src="js/script_ticTacToe.js"></script>
 </body>
 </html>
