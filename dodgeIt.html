@@ -9,9 +9,15 @@
 <body>
     <div class="game-container">
         <h1>🎯 Dodge Game</h1>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" id="survivalMode">Survival Mode</button>
+            <button class="mode-btn" id="collectMode">Collect Mode</button>
+        </div>
+
         <div class="score-board">
-            <div>Time: <span id="score">0</span>s</div>
-            <div>Best: <span id="highScore">0</span>s</div>
+            <div id="scoreLabel">Time: <span id="score">0</span>s</div>
+            <div id="highScoreLabel">Best: <span id="highScore">0</span>s</div>
         </div>
         
         <div class="canvas-wrapper">
@@ -19,7 +25,7 @@
         </div>
         
         <div class="game-over" id="gameOver">
-            Game Over! You survived <span id="finalScore">0</span> seconds!
+            <span id="gameOverText">Game Over!</span>
         </div>
 
         <div class="joystick-container" id="joystickContainer">
@@ -34,9 +40,9 @@
         </div>
 
         <div class="instructions">
-            <strong>Desktop:</strong> Arrow Keys or WASD (hold to move continuously)<br>
+            <strong>Desktop:</strong> Arrow Keys or WASD<br>
             <strong>Mobile:</strong> Drag Joystick<br>
-            Dodge the projectiles for as long as you can!
+            <span id="modeInstructions">Dodge the projectiles for as long as you can!</span>
         </div>
     </div>
 

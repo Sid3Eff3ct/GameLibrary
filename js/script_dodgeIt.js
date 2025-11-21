@@ -2,9 +2,16 @@
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
         const highScoreElement = document.getElementById('highScore');
+        const scoreLabelElement = document.getElementById('scoreLabel');
+        const highScoreLabelElement = document.getElementById('highScoreLabel');
         const gameOverElement = document.getElementById('gameOver');
-        const finalScoreElement = document.getElementById('finalScore');
+        const gameOverText = document.getElementById('gameOverText');
         const startBtn = document.getElementById('startBtn');
+        const modeInstructions = document.getElementById('modeInstructions');
+
+        // Mode buttons
+        const survivalModeBtn = document.getElementById('survivalMode');
+        const collectModeBtn = document.getElementById('collectMode');
 
         // Joystick elements
         const joystickBase = document.getElementById('joystickBase');
@@ -15,21 +22,70 @@
         const tileCount = canvas.width / gridSize;
         let player = { x: 10, y: 10, vx: 0, vy: 0 };
         let projectiles = [];
+        let collectible = null;
         let score = 0;
-        let highScore = localStorage.getItem('dodgeHighScore') || 0;
+        let highScore = 0;
         let gameRunning = false;
+        let gameMode = 'survival'; // 'survival' or 'collect'
         let gameLoop;
         let startTime;
         let spawnInterval;
         let difficultyInterval;
-        let spawnRate = 500;
+        let spawnRate = 800;
         let keysPressed = {};
 
         // Joystick state
         let joystickActive = false;
         let joystickDirection = { x: 0, y: 0 };
 
-        highScoreElement.textContent = highScore;
+        loadHighScore();
+
+        // Mode switching
+        survivalModeBtn.addEventListener('click', () => {
+            if (gameRunning) return;
+            gameMode = 'survival';
+            survivalModeBtn.classList.add('active');
+            collectModeBtn.classList.remove('active');
+            updateModeUI();
+            loadHighScore();
+        });
+
+        collectModeBtn.addEventListener('click', () => {
+            if (gameRunning) return;
+            gameMode = 'collect';
+            collectModeBtn.classList.add('active');
+            survivalModeBtn.classList.remove('active');
+            updateModeUI();
+            loadHighScore();
+        });
+
+        function updateModeUI() {
+            if (gameMode === 'survival') {
+                scoreLabelElement.innerHTML = 'Time: <span id="score">0</span>s';
+                highScoreLabelElement.innerHTML = 'Best: <span id="highScore">0</span>s';
+                modeInstructions.textContent = 'Dodge the projectiles for as long as you can!';
+            } else {
+                scoreLabelElement.innerHTML = 'Orbs: <span id="score">0</span>';
+                highScoreLabelElement.innerHTML = 'Best: <span id="highScore">0</span>';
+                modeInstructions.textContent = 'Collect blue orbs while dodging red projectiles!';
+            }
+            // Re-get score elements after innerHTML change
+            const newScoreElement = document.getElementById('score');
+            const newHighScoreElement = document.getElementById('highScore');
+            newScoreElement.textContent = 0;
+            newHighScoreElement.textContent = highScore;
+        }
+
+        function loadHighScore() {
+            const key = gameMode === 'survival' ? 'dodgeSurvivalHighScore' : 'dodgeCollectHighScore';
+            highScore = localStorage.getItem(key) || 0;
+            document.getElementById('highScore').textContent = highScore;
+        }
+
+        function saveHighScore() {
+            const key = gameMode === 'survival' ? 'dodgeSurvivalHighScore' : 'dodgeCollectHighScore';
+            localStorage.setItem(key, highScore);
+        }
 
         // Keyboard controls
         document.addEventListener('keydown', (event) => {
@@ -65,11 +121,9 @@
                 vy += moveSpeed;
             }
 
-            // Apply movement
             player.x += vx;
             player.y += vy;
 
-            // Clamp to boundaries
             player.x = Math.max(0, Math.min(tileCount - 1, player.x));
             player.y = Math.max(0, Math.min(tileCount - 1, player.y));
         }
@@ -104,7 +158,6 @@
 
                 joystickKnob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
 
-                // Normalize direction
                 joystickDirection.x = deltaX / maxDistance;
                 joystickDirection.y = deltaY / maxDistance;
             };
@@ -117,12 +170,10 @@
                 joystickDirection.y = 0;
             };
 
-            // Touch events
             joystickBase.addEventListener('touchstart', handleStart);
             document.addEventListener('touchmove', handleMove);
             document.addEventListener('touchend', handleEnd);
 
-            // Mouse events
             joystickBase.addEventListener('mousedown', handleStart);
             document.addEventListener('mousemove', handleMove);
             document.addEventListener('mouseup', handleEnd);
@@ -135,7 +186,6 @@
             player.x += joystickDirection.x * moveSpeed;
             player.y += joystickDirection.y * moveSpeed;
 
-            // Clamp to boundaries
             player.x = Math.max(0, Math.min(tileCount - 1, player.x));
             player.y = Math.max(0, Math.min(tileCount - 1, player.y));
         }
@@ -149,11 +199,16 @@
             gameRunning = true;
             player = { x: 10, y: 10, vx: 0, vy: 0 };
             projectiles = [];
+            collectible = null;
             score = 0;
             spawnRate = 800;
             startTime = Date.now();
             gameOverElement.classList.remove('show');
             startBtn.textContent = 'Restart';
+
+            if (gameMode === 'collect') {
+                spawnCollectible();
+            }
 
             spawnProjectile();
             spawnInterval = setInterval(spawnProjectile, spawnRate);
@@ -164,9 +219,31 @@
                     clearInterval(spawnInterval);
                     spawnInterval = setInterval(spawnProjectile, spawnRate);
                 }
-            }, 2000);
+            }, gameMode === 'survival' ? 2000 : 5000);
 
-            gameLoop = setInterval(updateGame, 1000 / 60); // 60 FPS for smooth movement
+            gameLoop = setInterval(updateGame, 1000 / 60);
+        }
+
+        function spawnCollectible() {
+            let validPosition = false;
+            let attempts = 0;
+            
+            while (!validPosition && attempts < 50) {
+                collectible = {
+                    x: Math.floor(Math.random() * (tileCount - 4)) + 2,
+                    y: Math.floor(Math.random() * (tileCount - 4)) + 2
+                };
+                
+                const distFromPlayer = Math.sqrt(
+                    Math.pow(collectible.x - player.x, 2) + 
+                    Math.pow(collectible.y - player.y, 2)
+                );
+                
+                if (distFromPlayer > 3) {
+                    validPosition = true;
+                }
+                attempts++;
+            }
         }
 
         function spawnProjectile() {
@@ -207,8 +284,11 @@
             handleKeyboardMovement();
             handleJoystickMovement();
 
-            score = Math.floor((Date.now() - startTime) / 1000);
-            scoreElement.textContent = score;
+            if (gameMode === 'survival') {
+                score = Math.floor((Date.now() - startTime) / 1000);
+            }
+
+            document.getElementById('score').textContent = gameMode === 'survival' ? score + 's' : score;
 
             projectiles.forEach(proj => {
                 proj.x += proj.dx * proj.speed;
@@ -220,6 +300,14 @@
                        proj.y >= -1 && proj.y <= tileCount + 1;
             });
 
+            if (gameMode === 'collect' && collectible) {
+                if (Math.abs(player.x - collectible.x) < 0.8 && 
+                    Math.abs(player.y - collectible.y) < 0.8) {
+                    score++;
+                    spawnCollectible();
+                }
+            }
+
             if (checkCollision()) {
                 endGame();
                 return;
@@ -230,7 +318,7 @@
 
         function checkCollision() {
             for (let proj of projectiles) {
-                if (Math.abs(proj.x - player.x) < 0.6 && Math.abs(proj.y - player.y) < 0.6) {
+                if (Math.abs(proj.x - player.x) < 0.5 && Math.abs(proj.y - player.y) < 0.5) {
                     return true;
                 }
             }
@@ -240,6 +328,23 @@
         function drawGame() {
             ctx.fillStyle = '#f5f5f5';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (gameMode === 'collect' && collectible) {
+                ctx.fillStyle = '#4ECDC4';
+                ctx.beginPath();
+                ctx.arc(
+                    collectible.x * gridSize + gridSize / 2,
+                    collectible.y * gridSize + gridSize / 2,
+                    gridSize / 2 - 2,
+                    0,
+                    2 * Math.PI
+                );
+                ctx.fill();
+                
+                ctx.strokeStyle = 'rgba(78, 205, 196, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
 
             ctx.fillStyle = '#667eea';
             ctx.fillRect(player.x * gridSize, player.y * gridSize, gridSize - 2, gridSize - 2);
@@ -264,12 +369,17 @@
             clearInterval(difficultyInterval);
             gameRunning = false;
             gameOverElement.classList.add('show');
-            finalScoreElement.textContent = score;
+            
+            if (gameMode === 'survival') {
+                gameOverText.textContent = `Game Over! You survived ${score} seconds!`;
+            } else {
+                gameOverText.textContent = `Game Over! You collected ${score} orbs!`;
+            }
 
             if (score > highScore) {
                 highScore = score;
-                highScoreElement.textContent = highScore;
-                localStorage.setItem('dodgeHighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+                saveHighScore();
             }
         }
 
