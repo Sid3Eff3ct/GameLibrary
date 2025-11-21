@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodge Game</title>
+    <link rel="stylesheet" href="css/style_dodgeIt.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎯 Dodge Game</h1>
+        <div class="score-board">
+            <div>Time: <span id="score">0</span>s</div>
+            <div>Best: <span id="highScore">0</span>s</div>
+        </div>
+        
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            Game Over! You survived <span id="finalScore">0</span> seconds!
+        </div>
+
+        <div class="controls" id="controls">
+            <button class="control-btn" id="upBtn">▲</button>
+            <button class="control-btn" id="leftBtn">◄</button>
+            <button class="control-btn" id="downBtn">▼</button>
+            <button class="control-btn" id="rightBtn">►</button>
+        </div>
+
+        <div class="buttons">
+            <button class="btn" id="startBtn">Start Game</button>
+            <a href="index.html" class="btn secondary">Back to Menu</a>
+        </div>
+
+        <div class="instructions">
+            <strong>Desktop:</strong> Arrow Keys or WASD<br>
+            <strong>Mobile:</strong> Touch Controls<br>
+            Dodge the projectiles for as long as you can!
+        </div>
+    </div>
+
+    <script src="js/script_dodgeIt.js"></script>
+</body>
+</html>
