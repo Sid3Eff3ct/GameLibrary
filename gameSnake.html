@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Snake Game</title>
     <link rel="stylesheet" href="css/style_gameSnake.css">
 </head>
@@ -22,11 +22,10 @@
             Game Over! Press Restart to play again
         </div>
 
-        <div class="controls" id="controls">
-            <button class="control-btn" id="upBtn">▲</button>
-            <button class="control-btn" id="leftBtn">◄</button>
-            <button class="control-btn" id="downBtn">▼</button>
-            <button class="control-btn" id="rightBtn">►</button>
+        <div class="joystick-container" id="joystickContainer">
+            <div class="joystick-base" id="joystickBase">
+                <div class="joystick-knob" id="joystickKnob"></div>
+            </div>
         </div>
 
         <div class="buttons">
@@ -36,7 +35,7 @@
 
         <div class="instructions">
             <strong>Desktop:</strong> Arrow Keys or WASD<br>
-            <strong>Mobile:</strong> Touch Controls or Swipe
+            <strong>Mobile:</strong> Drag Joystick or Swipe on Canvas
         </div>
     </div>
 

@@ -3,43 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snake Game</title>
-    <link rel="stylesheet" href="css/style_gameSnake.css">
+    <title>Random Picker Wheel</title>
+    <link rel="stylesheet" href="css/style_randomPicker.css">
 </head>
 <body>
     <div class="game-container">
-        <h1>🐍 Snake Game</h1>
-        <div class="score-board">
-            <div>Score: <span id="score">0</span></div>
-            <div>High Score: <span id="highScore">0</span></div>
-        </div>
+        <h1>🎡 Random Picker Wheel</h1>
         
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
-        </div>
-        
-        <div class="game-over" id="gameOver">
-            Game Over! Press Restart to play again
+        <div class="mode-selector">
+            <button class="mode-btn active" id="numberMode">Numbers</button>
+            <button class="mode-btn" id="itemMode">Custom Items</button>
         </div>
 
-        <div class="controls" id="controls">
-            <button class="control-btn" id="upBtn">▲</button>
-            <button class="control-btn" id="leftBtn">◄</button>
-            <button class="control-btn" id="downBtn">▼</button>
-            <button class="control-btn" id="rightBtn">►</button>
+        <div class="input-section">
+            <div id="numberSection">
+                <div class="number-inputs">
+                    <input type="number" id="minNum" value="1" placeholder="Min">
+                    <span>to</span>
+                    <input type="number" id="maxNum" value="10" placeholder="Max">
+                </div>
+            </div>
+
+            <div id="itemSection" class="hidden">
+                <div class="items-input">
+                    <textarea id="itemInput" placeholder="Enter items separated by commas (e.g., Pizza, Burger, Pasta)"></textarea>
+                </div>
+                <button class="btn" id="addItemsBtn">Add Items</button>
+                <div class="items-list" id="itemsList"></div>
+            </div>
         </div>
 
-        <div class="buttons">
-            <button class="btn" id="restartBtn">Restart</button>
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" id="wheel"></div>
+            <div class="wheel-center">SPIN</div>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div>
+            <button class="btn" id="spinBtn">Spin the Wheel!</button>
             <a href="index.html" class="btn secondary">Back to Menu</a>
-        </div>
-
-        <div class="instructions">
-            <strong>Desktop:</strong> Arrow Keys or WASD<br>
-            <strong>Mobile:</strong> Touch Controls or Swipe
         </div>
     </div>
 
-    <script src="js/script_gameSnake.js"></script>
+    <script src="js/script_randomPicker.js"></script>
 </body>
 </html>

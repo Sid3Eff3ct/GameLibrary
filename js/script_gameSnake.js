@@ -5,11 +5,9 @@
         const gameOverElement = document.getElementById('gameOver');
         const restartBtn = document.getElementById('restartBtn');
 
-        // Mobile controls
-        const upBtn = document.getElementById('upBtn');
-        const downBtn = document.getElementById('downBtn');
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
+        // Joystick elements
+        const joystickBase = document.getElementById('joystickBase');
+        const joystickKnob = document.getElementById('joystickKnob');
 
         // Game variables
         const gridSize = 20;
@@ -22,6 +20,10 @@
         let highScore = localStorage.getItem('snakeHighScore') || 0;
         let gameRunning = false;
         let gameLoop;
+
+        // Joystick state
+        let joystickActive = false;
+        let pendingDirection = null;
 
         highScoreElement.textContent = highScore;
 
@@ -69,38 +71,92 @@
             }
         }
 
-        // Mobile touch controls
-        upBtn.addEventListener('click', () => {
-            if (dy !== 1) {
-                dx = 0;
-                dy = -1;
-                if (!gameRunning) startGame();
-            }
-        });
+        // Joystick controls
+        function setupJoystick() {
+            const handleStart = (e) => {
+                e.preventDefault();
+                joystickActive = true;
+                joystickKnob.classList.add('active');
+                handleMove(e);
+            };
 
-        downBtn.addEventListener('click', () => {
-            if (dy !== -1) {
-                dx = 0;
-                dy = 1;
-                if (!gameRunning) startGame();
-            }
-        });
+            const handleMove = (e) => {
+                if (!joystickActive) return;
 
-        leftBtn.addEventListener('click', () => {
-            if (dx !== 1) {
-                dx = -1;
-                dy = 0;
-                if (!gameRunning) startGame();
-            }
-        });
+                const touch = e.touches ? e.touches[0] : e;
+                const rect = joystickBase.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
 
-        rightBtn.addEventListener('click', () => {
-            if (dx !== -1) {
-                dx = 1;
-                dy = 0;
-                if (!gameRunning) startGame();
-            }
-        });
+                let deltaX = touch.clientX - centerX;
+                let deltaY = touch.clientY - centerY;
+
+                const maxDistance = rect.width / 2 - 30;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                if (distance > maxDistance) {
+                    deltaX = (deltaX / distance) * maxDistance;
+                    deltaY = (deltaY / distance) * maxDistance;
+                }
+
+                joystickKnob.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+
+                // Determine direction based on angle
+                const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+                
+                if (distance > 20) { // Dead zone
+                    const goingUp = dy === -1;
+                    const goingDown = dy === 1;
+                    const goingRight = dx === 1;
+                    const goingLeft = dx === -1;
+
+                    // Right: -45 to 45
+                    if (angle > -45 && angle <= 45 && !goingLeft) {
+                        pendingDirection = { dx: 1, dy: 0 };
+                    }
+                    // Down: 45 to 135
+                    else if (angle > 45 && angle <= 135 && !goingUp) {
+                        pendingDirection = { dx: 0, dy: 1 };
+                    }
+                    // Left: 135 to -135
+                    else if ((angle > 135 || angle <= -135) && !goingRight) {
+                        pendingDirection = { dx: -1, dy: 0 };
+                    }
+                    // Up: -135 to -45
+                    else if (angle > -135 && angle <= -45 && !goingDown) {
+                        pendingDirection = { dx: 0, dy: -1 };
+                    }
+                }
+            };
+
+            const handleEnd = () => {
+                joystickActive = false;
+                joystickKnob.classList.remove('active');
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+                
+                if (pendingDirection && !gameRunning) {
+                    dx = pendingDirection.dx;
+                    dy = pendingDirection.dy;
+                    startGame();
+                } else if (pendingDirection) {
+                    dx = pendingDirection.dx;
+                    dy = pendingDirection.dy;
+                }
+                pendingDirection = null;
+            };
+
+            // Touch events
+            joystickBase.addEventListener('touchstart', handleStart);
+            document.addEventListener('touchmove', handleMove);
+            document.addEventListener('touchend', handleEnd);
+
+            // Mouse events
+            joystickBase.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+        }
+
+        setupJoystick();
 
         // Swipe controls for canvas
         let touchStartX = 0;
@@ -154,6 +210,13 @@
         }
 
         function updateGame() {
+            // Apply pending joystick direction
+            if (pendingDirection) {
+                dx = pendingDirection.dx;
+                dy = pendingDirection.dy;
+                pendingDirection = null;
+            }
+
             moveSnake();
             
             if (checkCollision()) {
