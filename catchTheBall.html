@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch Orbs Game</title>
+    <link rel="stylesheet" href="css/style_catchTheBall.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>🌟 Catch the Orbs</h1>
+        <div class="score-board">
+            <div>Score: <span id="score">0</span></div>
+            <div>Best: <span id="highScore">0</span></div>
+        </div>
+        
+        <div class="timer-bar-container">
+            <div class="timer-bar" id="timerBar"></div>
+            <div class="timer-text" id="timerText">5.0s</div>
+        </div>
+        
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="400" height="500"></canvas>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            Game Over! Final Score: <span id="finalScore">0</span>
+        </div>
+
+        <div class="joystick-container" id="joystickContainer">
+            <div class="joystick-base" id="joystickBase">
+                <div class="joystick-knob" id="joystickKnob"></div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn" id="startBtn">Start Game</button>
+            <a href="index.html" class="btn secondary">Back to Menu</a>
+        </div>
+
+        <div class="instructions">
+            <strong>Desktop:</strong> Arrow Keys or WASD<br>
+            <strong>Mobile:</strong> Drag Joystick<br>
+            Catch 🔵 blue orbs before time runs out!<br>
+            Avoid 🔴 red orbs (instant death)!
+        </div>
+    </div>
+
+    <script src="js/script_catchTheBall.js"></script>
+</body>
+</html>

@@ -1,158 +1,117 @@
-        const numberModeBtn = document.getElementById('numberMode');
-        const itemModeBtn = document.getElementById('itemMode');
-        const numberSection = document.getElementById('numberSection');
-        const itemSection = document.getElementById('itemSection');
         const minNumInput = document.getElementById('minNum');
         const maxNumInput = document.getElementById('maxNum');
-        const itemInput = document.getElementById('itemInput');
-        const addItemsBtn = document.getElementById('addItemsBtn');
-        const itemsList = document.getElementById('itemsList');
-        const wheel = document.getElementById('wheel');
-        const spinBtn = document.getElementById('spinBtn');
-        const resultDiv = document.getElementById('result');
+        const pickBtn = document.getElementById('pickBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resultElement = document.getElementById('result');
+        const errorMessage = document.getElementById('errorMessage');
+        const historySection = document.getElementById('historySection');
+        const historyList = document.getElementById('historyList');
 
-        let currentMode = 'number';
-        let items = [];
-        let isSpinning = false;
+        let history = [];
+        let isRolling = false;
 
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+        pickBtn.addEventListener('click', pickRandomNumber);
+        clearBtn.addEventListener('click', clearHistory);
 
-        // Mode switching
-        numberModeBtn.addEventListener('click', () => {
-            currentMode = 'number';
-            numberModeBtn.classList.add('active');
-            itemModeBtn.classList.remove('active');
-            numberSection.classList.remove('hidden');
-            itemSection.classList.add('hidden');
-            updateWheel();
+        minNumInput.addEventListener('input', hideError);
+        maxNumInput.addEventListener('input', hideError);
+
+        // Allow Enter key to pick
+        minNumInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') pickRandomNumber();
+        });
+        maxNumInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') pickRandomNumber();
         });
 
-        itemModeBtn.addEventListener('click', () => {
-            currentMode = 'item';
-            itemModeBtn.classList.add('active');
-            numberModeBtn.classList.remove('active');
-            numberSection.classList.add('hidden');
-            itemSection.classList.remove('hidden');
-            updateWheel();
-        });
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
 
-        // Add items
-        addItemsBtn.addEventListener('click', () => {
-            const input = itemInput.value.trim();
-            if (input) {
-                const newItems = input.split(',').map(item => item.trim()).filter(item => item);
-                items = [...items, ...newItems];
-                itemInput.value = '';
-                renderItems();
-                updateWheel();
+        function pickRandomNumber() {
+            if (isRolling) return;
+
+            const min = parseInt(minNumInput.value);
+            const max = parseInt(maxNumInput.value);
+
+            // Validation
+            if (isNaN(min) || isNaN(max)) {
+                showError('Please enter valid numbers!');
+                return;
             }
-        });
 
-        function renderItems() {
-            itemsList.innerHTML = '';
-            items.forEach((item, index) => {
-                const tag = document.createElement('div');
-                tag.className = 'item-tag';
-                tag.innerHTML = `
-                    ${item}
-                    <span class="remove" data-index="${index}">×</span>
-                `;
-                itemsList.appendChild(tag);
-            });
+            if (min >= max) {
+                showError('Maximum must be greater than minimum!');
+                return;
+            }
 
-            // Add remove listeners
-            document.querySelectorAll('.item-tag .remove').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    items.splice(index, 1);
-                    renderItems();
-                    updateWheel();
+            hideError();
+            isRolling = true;
+            pickBtn.disabled = true;
+
+            // Rolling animation
+            resultElement.classList.add('rolling');
+            let rollCount = 0;
+            const rollDuration = 1500; // 1.5 seconds
+            const rollInterval = 50;
+            const totalRolls = rollDuration / rollInterval;
+
+            const rollTimer = setInterval(() => {
+                const randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
+                resultElement.textContent = randomNum;
+                rollCount++;
+
+                if (rollCount >= totalRolls) {
+                    clearInterval(rollTimer);
+                    finalizePick(min, max);
+                }
+            }, rollInterval);
+        }
+
+        function finalizePick(min, max) {
+            const finalNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+            
+            resultElement.classList.remove('rolling');
+            resultElement.textContent = finalNumber;
+            resultElement.classList.add('show');
+
+            // Add to history
+            history.unshift(finalNumber);
+            if (history.length > 10) {
+                history.pop();
+            }
+            updateHistory();
+
+            isRolling = false;
+            pickBtn.disabled = false;
+        }
+
+        function updateHistory() {
+            if (history.length > 0) {
+                historySection.style.display = 'block';
+                historyList.innerHTML = '';
+                history.forEach(num => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.textContent = num;
+                    historyList.appendChild(item);
                 });
-            });
-        }
-
-        function updateWheel() {
-            wheel.innerHTML = '';
-            wheel.style.transform = 'rotate(0deg)';
-            
-            let wheelItems = [];
-            
-            if (currentMode === 'number') {
-                const min = parseInt(minNumInput.value) || 1;
-                const max = parseInt(maxNumInput.value) || 10;
-                
-                if (min >= max) {
-                    maxNumInput.value = min + 1;
-                    return;
-                }
-                
-                for (let i = min; i <= max; i++) {
-                    wheelItems.push(i.toString());
-                }
             } else {
-                wheelItems = items.length > 0 ? items : ['Add items!'];
+                historySection.style.display = 'none';
             }
-
-            const angleStep = 360 / wheelItems.length;
-            
-            wheelItems.forEach((item, index) => {
-                const segment = document.createElement('div');
-                segment.className = 'wheel-item';
-                segment.textContent = item;
-                segment.style.background = colors[index % colors.length];
-                segment.style.transform = `rotate(${angleStep * index}deg)`;
-                segment.style.clipPath = `polygon(0 0, 100% 0, 100% 100%)`;
-                wheel.appendChild(segment);
-            });
         }
 
-        function spinWheel() {
-            if (isSpinning) return;
-            
-            let wheelItems = [];
-            
-            if (currentMode === 'number') {
-                const min = parseInt(minNumInput.value) || 1;
-                const max = parseInt(maxNumInput.value) || 10;
-                for (let i = min; i <= max; i++) {
-                    wheelItems.push(i.toString());
-                }
-            } else {
-                if (items.length === 0) {
-                    alert('Please add some items first!');
-                    return;
-                }
-                wheelItems = items;
-            }
-
-            isSpinning = true;
-            spinBtn.disabled = true;
-            resultDiv.classList.remove('show');
-            resultDiv.textContent = '';
-
-            const spins = 5 + Math.random() * 3; // 5-8 full rotations
-            const randomDegree = Math.random() * 360;
-            const totalRotation = spins * 360 + randomDegree;
-            
-            wheel.style.transform = `rotate(${totalRotation}deg)`;
-
-            setTimeout(() => {
-                const angleStep = 360 / wheelItems.length;
-                const normalizedRotation = (totalRotation % 360);
-                const selectedIndex = Math.floor(((360 - normalizedRotation + (angleStep / 2)) % 360) / angleStep);
-                const result = wheelItems[selectedIndex];
-
-                resultDiv.textContent = `🎉 ${result}`;
-                resultDiv.classList.add('show');
-                
-                isSpinning = false;
-                spinBtn.disabled = false;
-            }, 4000);
+        function clearHistory() {
+            history = [];
+            updateHistory();
+            resultElement.classList.remove('show');
+            resultElement.textContent = '?';
         }
 
-        spinBtn.addEventListener('click', spinWheel);
-        minNumInput.addEventListener('change', updateWheel);
-        maxNumInput.addEventListener('change', updateWheel);
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
 
-        // Initial wheel setup
-        updateWheel();
+        // Initial setup
+        resultElement.textContent = '?';

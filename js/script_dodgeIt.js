@@ -288,7 +288,7 @@
                 score = Math.floor((Date.now() - startTime) / 1000);
             }
 
-            document.getElementById('score').textContent = gameMode === 'survival' ? score + 's' : score;
+            document.getElementById('score').textContent = gameMode === 'survival' ? score : score;
 
             projectiles.forEach(proj => {
                 proj.x += proj.dx * proj.speed;

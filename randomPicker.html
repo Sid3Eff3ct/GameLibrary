@@ -3,47 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Picker Wheel</title>
+    <title>Random Number Picker</title>
     <link rel="stylesheet" href="css/style_randomPicker.css">
 </head>
 <body>
     <div class="game-container">
-        <h1>🎡 Random Picker Wheel</h1>
+        <h1>🎲 Random Number Picker</h1>
         
-        <div class="mode-selector">
-            <button class="mode-btn active" id="numberMode">Numbers</button>
-            <button class="mode-btn" id="itemMode">Custom Items</button>
-        </div>
-
         <div class="input-section">
-            <div id="numberSection">
-                <div class="number-inputs">
+            <div class="number-inputs">
+                <div class="input-group">
+                    <label for="minNum">Minimum</label>
                     <input type="number" id="minNum" value="1" placeholder="Min">
-                    <span>to</span>
-                    <input type="number" id="maxNum" value="10" placeholder="Max">
+                </div>
+                <div class="separator">to</div>
+                <div class="input-group">
+                    <label for="maxNum">Maximum</label>
+                    <input type="number" id="maxNum" value="100" placeholder="Max">
                 </div>
             </div>
-
-            <div id="itemSection" class="hidden">
-                <div class="items-input">
-                    <textarea id="itemInput" placeholder="Enter items separated by commas (e.g., Pizza, Burger, Pasta)"></textarea>
-                </div>
-                <button class="btn" id="addItemsBtn">Add Items</button>
-                <div class="items-list" id="itemsList"></div>
-            </div>
+            <div class="error-message" id="errorMessage">Maximum must be greater than minimum!</div>
         </div>
 
-        <div class="wheel-container">
-            <div class="wheel-pointer"></div>
-            <div class="wheel" id="wheel"></div>
-            <div class="wheel-center">SPIN</div>
+        <div class="result-container">
+            <div class="result" id="result">?</div>
         </div>
 
-        <div class="result" id="result"></div>
-
-        <div>
-            <button class="btn" id="spinBtn">Spin the Wheel!</button>
+        <div class="buttons">
+            <button class="btn" id="pickBtn">Pick Random Number</button>
+            <button class="btn secondary" id="clearBtn">Clear History</button>
             <a href="index.html" class="btn secondary">Back to Menu</a>
+        </div>
+
+        <div class="history" id="historySection" style="display: none;">
+            <h3>Recent Picks:</h3>
+            <div class="history-list" id="historyList"></div>
         </div>
     </div>
 
