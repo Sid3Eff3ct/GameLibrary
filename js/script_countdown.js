@@ -1,5 +1,11 @@
         const holidays = [
             {
+                name: "Somenone special",
+                icon: "❤️",
+                month: 6,  // January (0-indexed)
+                day: 27
+            },
+            {
                 name: "New Year's Day",
                 icon: "🎊",
                 month: 0,  // January (0-indexed)
