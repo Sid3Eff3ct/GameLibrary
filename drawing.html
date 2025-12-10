@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dot Drawing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 32px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .grid-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .grid-btn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .grid-btn:active {
+            transform: scale(0.95);
+        }
+
+        .canvas-grid-wrapper {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            grid-template-rows: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+            justify-items: center;
+            margin-bottom: 20px;
+        }
+
+        .canvas-center {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .top-controls {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .bottom-controls {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .left-controls {
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            gap: 10px;
+            flex-direction: row;
+        }
+
+        .right-controls {
+            grid-column: 3;
+            grid-row: 2;
+            display: flex;
+            gap: 10px;
+            flex-direction: row;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .control-group input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .control-group input[type="color"] {
+            width: 50px;
+            height: 38px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn.secondary {
+            background: #888;
+        }
+
+        .btn.danger {
+            background: #ff6b6b;
+        }
+
+        .btn.active {
+            background: #4ECDC4;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #drawingCanvas {
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            touch-action: none;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #666;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .mirror-line {
+            position: absolute;
+            background: #ff6b6b;
+            pointer-events: none;
+        }
+
+        .mirror-line.vertical {
+            width: 3px;
+            height: 100%;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .mirror-line.horizontal {
+            height: 3px;
+            width: 100%;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: transform 0.2s ease;
+            display: none;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.1);
+        }
+
+        body.fullscreen {
+            padding: 0;
+        }
+
+        body.fullscreen .container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.fullscreen .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.fullscreen #drawingCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        body.fullscreen .controls,
+        body.fullscreen h1,
+        body.fullscreen .btn-group,
+        body.fullscreen .info {
+            display: none;
+        }
+
+        body.fullscreen .canvas-grid-wrapper {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+        }
+
+        body.fullscreen .canvas-center {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        body.fullscreen .top-controls,
+        body.fullscreen .bottom-controls,
+        body.fullscreen .left-controls,
+        body.fullscreen .right-controls {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .fullscreen-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .checkbox-group:hover {
+            background: #e8e8e8;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .info {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+            margin-top: 15px;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .preset-colors {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .color-swatch {
+            width: 35px;
+            height: 35px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #667eea;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 26px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+
+            .mode-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .control-group input[type="number"] {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Dot Drawing Studio</h1>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="normal">✏️ Normal Mode</button>
+            <button class="mode-btn" data-mode="vertical">🪞 Mirror Vertical</button>
+            <button class="mode-btn" data-mode="horizontal">🪞 Mirror Horizontal</button>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Grid: <span id="gridSize">8 × 8</span></label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="showDotsCheckbox" checked>
+                <label for="showDotsCheckbox">Show Dots</label>
+            </div>
+        </div>
+
+        <div class="controls">
+            <label style="color: #666; font-weight: 600; font-size: 14px;">Canvas Background:</label>
+            <div class="preset-colors">
+                <div class="color-swatch active" data-color="#ffffff" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                <div class="color-swatch" data-color="#f0f0f0" style="background: #f0f0f0;"></div>
+                <div class="color-swatch" data-color="#000000" style="background: #000000;"></div>
+                <div class="color-swatch" data-color="#ffe4e1" style="background: #ffe4e1;"></div>
+                <div class="color-swatch" data-color="#e0f6ff" style="background: #e0f6ff;"></div>
+                <div class="color-swatch" data-color="#fff4e0" style="background: #fff4e0;"></div>
+            </div>
+            <div class="control-group">
+                <label for="bgColorPicker">Custom:</label>
+                <input type="color" id="bgColorPicker" value="#ffffff">
+            </div>
+        </div>
+
+        <div class="canvas-grid-wrapper">
+            <div class="top-controls">
+                <button class="grid-btn" id="topAddBtn" title="Add row at top">+</button>
+                <button class="grid-btn" id="topRemoveBtn" title="Remove row from top">−</button>
+            </div>
+            <div class="left-controls">
+                <button class="grid-btn" id="leftAddBtn" title="Add column at left">+</button>
+                <button class="grid-btn" id="leftRemoveBtn" title="Remove column from left">−</button>
+            </div>
+            <div class="canvas-center" style="position: relative;">
+                <canvas id="drawingCanvas" width="700" height="700"></canvas>
+                <div class="mirror-line vertical" id="mirrorLineVertical" style="display: none;"></div>
+                <div class="mirror-line horizontal" id="mirrorLineHorizontal" style="display: none;"></div>
+            </div>
+            <div class="right-controls">
+                <button class="grid-btn" id="rightAddBtn" title="Add column at right">+</button>
+                <button class="grid-btn" id="rightRemoveBtn" title="Remove column from right">−</button>
+            </div>
+            <div class="bottom-controls">
+                <button class="grid-btn" id="bottomAddBtn" title="Add row at bottom">+</button>
+                <button class="grid-btn" id="bottomRemoveBtn" title="Remove row from bottom">−</button>
+            </div>
+        </div>
+
+        <div class="info" id="statusText">Click on two dots to draw a line</div>
+
+        <div class="btn-group">
+            <button class="btn" id="saveBtn">💾 Save Image</button>
+            <button class="btn danger" id="clearLinesBtn">Clear Lines</button>
+            <button class="btn secondary" id="resetBtn">Reset All</button>
+            <a href="index.html" class="btn secondary">Back to Menu</a>
+        </div>
+    </div>
+
+    <button class="fullscreen-btn" id="fullscreenBtn">⛶</button>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSizeDisplay = document.getElementById('gridSize');
+        const mirrorLineVertical = document.getElementById('mirrorLineVertical');
+        const mirrorLineHorizontal = document.getElementById('mirrorLineHorizontal');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        const topAddBtn = document.getElementById('topAddBtn');
+        const bottomAddBtn = document.getElementById('bottomAddBtn');
+        const leftAddBtn = document.getElementById('leftAddBtn');
+        const rightAddBtn = document.getElementById('rightAddBtn');
+        const topRemoveBtn = document.getElementById('topRemoveBtn');
+        const bottomRemoveBtn = document.getElementById('bottomRemoveBtn');
+        const leftRemoveBtn = document.getElementById('leftRemoveBtn');
+        const rightRemoveBtn = document.getElementById('rightRemoveBtn');
+        const clearLinesBtn = document.getElementById('clearLinesBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const showDotsCheckbox = document.getElementById('showDotsCheckbox');
+        const bgColorPicker = document.getElementById('bgColorPicker');
+        const statusText = document.getElementById('statusText');
+        const colorSwatches = document.querySelectorAll('.color-swatch');
+
+        let rows = 8;
+        let cols = 8;
+        let dots = [];
+        let lines = [];
+        let drawing = false;
+        let startDot = null;
+        let showDots = true;
+        let canvasBgColor = '#ffffff';
+        let mirrorMode = 'normal'; // 'normal', 'vertical', 'horizontal'
+        const dotSize = 20;
+
+        class Dot {
+            constructor(x, y, size) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.color = '#333';
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            contains(px, py) {
+                const dx = px - this.x;
+                const dy = py - this.y;
+                return Math.sqrt(dx * dx + dy * dy) <= this.size * 1.5;
+            }
+
+            getCenter() {
+                return { x: this.x, y: this.y };
+            }
+        }
+
+        class Line {
+            constructor(startX, startY, endX, endY, startDotIndex = null, endDotIndex = null) {
+                this.startX = startX;
+                this.startY = startY;
+                this.endX = endX;
+                this.endY = endY;
+                this.startDotIndex = startDotIndex;
+                this.endDotIndex = endDotIndex;
+            }
+
+            draw() {
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.startY);
+                ctx.lineTo(this.endX, this.endY);
+                ctx.stroke();
+            }
+
+            updatePositions(dots) {
+                if (this.startDotIndex !== null && dots[this.startDotIndex]) {
+                    const startCenter = dots[this.startDotIndex].getCenter();
+                    this.startX = startCenter.x;
+                    this.startY = startCenter.y;
+                }
+                if (this.endDotIndex !== null && dots[this.endDotIndex]) {
+                    const endCenter = dots[this.endDotIndex].getCenter();
+                    this.endX = endCenter.x;
+                    this.endY = endCenter.y;
+                }
+            }
+        }
+
+        function createDots() {
+            dots = [];
+            if (rows <= 0 || cols <= 0) return;
+
+            const columnSpace = canvas.width / cols;
+            const rowSpace = canvas.height / rows;
+
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const centerX = j * columnSpace + columnSpace / 2;
+                    const centerY = i * rowSpace + rowSpace / 2;
+                    dots.push(new Dot(centerX, centerY, dotSize));
+                }
+            }
+            
+            updateGridDisplay();
+        }
+
+        function updateGridDisplay() {
+            gridSizeDisplay.textContent = `${rows} × ${cols}`;
+        }
+
+        function getDotIndex(row, col) {
+            return row * cols + col;
+        }
+
+        function addRowTop() {
+            rows++;
+            // Update all line indices (shift down by cols)
+            lines.forEach(line => {
+                if (line.startDotIndex !== null) line.startDotIndex += cols;
+                if (line.endDotIndex !== null) line.endDotIndex += cols;
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function addRowBottom() {
+            rows++;
+            // No index changes needed, just add new row
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function addColLeft() {
+            cols++;
+            // Update all line indices (more complex - need to recalculate)
+            const oldCols = cols - 1;
+            lines.forEach(line => {
+                if (line.startDotIndex !== null) {
+                    const oldRow = Math.floor(line.startDotIndex / oldCols);
+                    const oldCol = line.startDotIndex % oldCols;
+                    line.startDotIndex = oldRow * cols + (oldCol + 1);
+                }
+                if (line.endDotIndex !== null) {
+                    const oldRow = Math.floor(line.endDotIndex / oldCols);
+                    const oldCol = line.endDotIndex % oldCols;
+                    line.endDotIndex = oldRow * cols + (oldCol + 1);
+                }
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function addColRight() {
+            cols++;
+            // Update all line indices (recalculate based on old cols)
+            const oldCols = cols - 1;
+            lines.forEach(line => {
+                if (line.startDotIndex !== null) {
+                    const oldRow = Math.floor(line.startDotIndex / oldCols);
+                    const oldCol = line.startDotIndex % oldCols;
+                    line.startDotIndex = oldRow * cols + oldCol;
+                }
+                if (line.endDotIndex !== null) {
+                    const oldRow = Math.floor(line.endDotIndex / oldCols);
+                    const oldCol = line.endDotIndex % oldCols;
+                    line.endDotIndex = oldRow * cols + oldCol;
+                }
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function removeRowTop() {
+            if (rows <= 2) return;
+            rows--;
+            // Remove lines connected to top row and shift others
+            lines = lines.filter(line => {
+                const startInTopRow = line.startDotIndex !== null && line.startDotIndex < cols;
+                const endInTopRow = line.endDotIndex !== null && line.endDotIndex < cols;
+                return !startInTopRow && !endInTopRow;
+            });
+            lines.forEach(line => {
+                if (line.startDotIndex !== null) line.startDotIndex -= cols;
+                if (line.endDotIndex !== null) line.endDotIndex -= cols;
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function removeRowBottom() {
+            if (rows <= 2) return;
+            rows--;
+            const bottomRowStart = rows * cols;
+            // Remove lines connected to bottom row
+            lines = lines.filter(line => {
+                const startInBottomRow = line.startDotIndex !== null && line.startDotIndex >= bottomRowStart;
+                const endInBottomRow = line.endDotIndex !== null && line.endDotIndex >= bottomRowStart;
+                return !startInBottomRow && !endInBottomRow;
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function removeColLeft() {
+            if (cols <= 2) return;
+            const oldCols = cols;
+            cols--;
+            // Remove lines in left column and recalculate indices
+            lines = lines.filter(line => {
+                const startCol = line.startDotIndex !== null ? line.startDotIndex % oldCols : -1;
+                const endCol = line.endDotIndex !== null ? line.endDotIndex % oldCols : -1;
+                return startCol !== 0 && endCol !== 0;
+            });
+            lines.forEach(line => {
+                if (line.startDotIndex !== null) {
+                    const oldRow = Math.floor(line.startDotIndex / oldCols);
+                    const oldCol = line.startDotIndex % oldCols;
+                    line.startDotIndex = oldRow * cols + (oldCol - 1);
+                }
+                if (line.endDotIndex !== null) {
+                    const oldRow = Math.floor(line.endDotIndex / oldCols);
+                    const oldCol = line.endDotIndex % oldCols;
+                    line.endDotIndex = oldRow * cols + (oldCol - 1);
+                }
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function removeColRight() {
+            if (cols <= 2) return;
+            const oldCols = cols;
+            cols--;
+            // Remove lines in right column and recalculate indices
+            lines = lines.filter(line => {
+                const startCol = line.startDotIndex !== null ? line.startDotIndex % oldCols : -1;
+                const endCol = line.endDotIndex !== null ? line.endDotIndex % oldCols : -1;
+                return startCol !== oldCols - 1 && endCol !== oldCols - 1;
+            });
+            lines.forEach(line => {
+                if (line.startDotIndex !== null) {
+                    const oldRow = Math.floor(line.startDotIndex / oldCols);
+                    const oldCol = line.startDotIndex % oldCols;
+                    line.startDotIndex = oldRow * cols + oldCol;
+                }
+                if (line.endDotIndex !== null) {
+                    const oldRow = Math.floor(line.endDotIndex / oldCols);
+                    const oldCol = line.endDotIndex % oldCols;
+                    line.endDotIndex = oldRow * cols + oldCol;
+                }
+            });
+            createDots();
+            lines.forEach(line => line.updatePositions(dots));
+            redraw();
+        }
+
+        function redraw() {
+            ctx.fillStyle = canvasBgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            lines.forEach(line => line.draw());
+
+            if (showDots) {
+                dots.forEach(dot => dot.draw());
+            }
+        }
+
+        function getDotAtPosition(x, y) {
+            for (let i = 0; i < dots.length; i++) {
+                if (dots[i].contains(x, y)) {
+                    return { dot: dots[i], index: i };
+                }
+            }
+            return null;
+        }
+
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // Mode switching - removed
+
+        // Canvas interaction
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('touchstart', handleStart);
+
+        function handleStart(e) {
+            e.preventDefault();
+            const coords = getCanvasCoordinates(e);
+            handleDrawClick(coords.x, coords.y);
+        }
+
+        function handleDrawClick(x, y) {
+            const clickedResult = getDotAtPosition(x, y);
+            if (!clickedResult) return;
+
+            if (!drawing) {
+                drawing = true;
+                startDot = clickedResult;
+                startDot.dot.color = '#4ECDC4';
+                statusText.textContent = 'Click another dot to complete the line';
+                redraw();
+            } else {
+                const endDot = clickedResult;
+                const startCenter = startDot.dot.getCenter();
+                const endCenter = endDot.dot.getCenter();
+                
+                // Draw the original line
+                lines.push(new Line(
+                    startCenter.x, 
+                    startCenter.y, 
+                    endCenter.x, 
+                    endCenter.y,
+                    startDot.index,
+                    endDot.index
+                ));
+
+                // If in mirror mode, create mirrored line
+                if (mirrorMode === 'vertical') {
+                    const mirroredStartIndex = getMirroredIndexVertical(startDot.index);
+                    const mirroredEndIndex = getMirroredIndexVertical(endDot.index);
+                    if (mirroredStartIndex !== null && mirroredEndIndex !== null) {
+                        const mirroredStart = dots[mirroredStartIndex].getCenter();
+                        const mirroredEnd = dots[mirroredEndIndex].getCenter();
+                        lines.push(new Line(
+                            mirroredStart.x,
+                            mirroredStart.y,
+                            mirroredEnd.x,
+                            mirroredEnd.y,
+                            mirroredStartIndex,
+                            mirroredEndIndex
+                        ));
+                    }
+                } else if (mirrorMode === 'horizontal') {
+                    const mirroredStartIndex = getMirroredIndexHorizontal(startDot.index);
+                    const mirroredEndIndex = getMirroredIndexHorizontal(endDot.index);
+                    if (mirroredStartIndex !== null && mirroredEndIndex !== null) {
+                        const mirroredStart = dots[mirroredStartIndex].getCenter();
+                        const mirroredEnd = dots[mirroredEndIndex].getCenter();
+                        lines.push(new Line(
+                            mirroredStart.x,
+                            mirroredStart.y,
+                            mirroredEnd.x,
+                            mirroredEnd.y,
+                            mirroredStartIndex,
+                            mirroredEndIndex
+                        ));
+                    }
+                }
+                
+                startDot.dot.color = '#333';
+                drawing = false;
+                startDot = null;
+                statusText.textContent = 'Click on two dots to draw a line';
+                redraw();
+            }
+        }
+
+        function getMirroredIndexVertical(index) {
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const mirroredCol = cols - 1 - col;
+            return row * cols + mirroredCol;
+        }
+
+        function getMirroredIndexHorizontal(index) {
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            const mirroredRow = rows - 1 - row;
+            return mirroredRow * cols + col;
+        }
+
+        // Background color controls
+        colorSwatches.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                colorSwatches.forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+                canvasBgColor = swatch.dataset.color;
+                bgColorPicker.value = canvasBgColor;
+                redraw();
+            });
+        });
+
+        bgColorPicker.addEventListener('input', () => {
+            canvasBgColor = bgColorPicker.value;
+            colorSwatches.forEach(s => s.classList.remove('active'));
+            redraw();
+        });
+
+        // Mode switching
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const newMode = btn.dataset.mode;
+                
+                // Warn user if switching to mirror mode with existing lines
+                if (newMode !== 'normal' && lines.length > 0) {
+                    if (!confirm('⚠️ Warning: Switching to mirror mode will delete all existing lines. Continue?')) {
+                        return;
+                    }
+                    lines = [];
+                }
+
+                modeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                mirrorMode = newMode;
+
+                // Update mirror line visibility
+                mirrorLineVertical.style.display = mirrorMode === 'vertical' ? 'block' : 'none';
+                mirrorLineHorizontal.style.display = mirrorMode === 'horizontal' ? 'block' : 'none';
+
+                if (mirrorMode === 'normal') {
+                    statusText.textContent = 'Normal Mode: Draw freely';
+                } else if (mirrorMode === 'vertical') {
+                    statusText.textContent = 'Mirror Mode (Vertical): Lines mirror across center';
+                } else {
+                    statusText.textContent = 'Mirror Mode (Horizontal): Lines mirror across center';
+                }
+
+                redraw();
+            });
+        });
+
+        // Button handlers
+        topAddBtn.addEventListener('click', addRowTop);
+        bottomAddBtn.addEventListener('click', addRowBottom);
+        leftAddBtn.addEventListener('click', addColLeft);
+        rightAddBtn.addEventListener('click', addColRight);
+        topRemoveBtn.addEventListener('click', removeRowTop);
+        bottomRemoveBtn.addEventListener('click', removeRowBottom);
+        leftRemoveBtn.addEventListener('click', removeColLeft);
+        rightRemoveBtn.addEventListener('click', removeColRight);
+
+        clearLinesBtn.addEventListener('click', () => {
+            lines = [];
+            drawing = false;
+            if (startDot) {
+                startDot.dot.color = '#333';
+                startDot = null;
+            }
+            statusText.textContent = 'All lines cleared!';
+            redraw();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            rows = 8;
+            cols = 8;
+            createDots();
+            lines = [];
+            drawing = false;
+            startDot = null;
+            canvasBgColor = '#ffffff';
+            bgColorPicker.value = '#ffffff';
+            colorSwatches.forEach(s => s.classList.remove('active'));
+            colorSwatches[0].classList.add('active');
+            statusText.textContent = 'Everything reset!';
+            redraw();
+        });
+
+        fullscreenBtn.addEventListener('click', () => {
+            document.body.classList.toggle('fullscreen');
+            fullscreenBtn.textContent = document.body.classList.contains('fullscreen') ? '✕' : '⛶';
+        });
+
+        showDotsCheckbox.addEventListener('change', () => {
+            showDots = showDotsCheckbox.checked;
+            redraw();
+        });
+
+        saveBtn.addEventListener('click', () => {
+            // Temporarily hide dots for saving
+            const originalShowDots = showDots;
+            showDots = false;
+            redraw();
+            
+            // Save the image
+            const link = document.createElement('a');
+            link.download = 'dot-drawing.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            // Restore original dot visibility
+            showDots = originalShowDots;
+            redraw();
+        });
+
+        // Initialize
+        createDots();
+        redraw();
+    </script>
+</body>
+</html>
